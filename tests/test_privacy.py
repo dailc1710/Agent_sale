@@ -48,4 +48,3 @@ def test_webhook_signature_is_bound_to_timestamp_and_exact_body(monkeypatch: pyt
     with pytest.raises(HTTPException) as error:
         security.verify_webhook(tenant_id, timestamp, signature, body + b" ")
     assert error.value.status_code == 401
-

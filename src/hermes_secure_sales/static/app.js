@@ -275,4 +275,3 @@
     charCount.textContent = `${messageInput.value.length} / 12000`;
   });
 })();
-

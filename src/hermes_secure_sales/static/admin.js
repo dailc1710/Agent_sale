@@ -80,6 +80,8 @@
   function showShopSettings() {
     if (currentRole !== 'admin') { showDashboard(); message($('#inbox-message'), 'Chỉ quản trị viên mới được vào cài đặt cơ sở.'); return; }
     loginView.hidden = true; dashboard.hidden = true; shopSettingsView.hidden = false;
+    loadModelStatus();
+    if (selected) loadShopKnowledge(selected.id);
   }
   function renderShopList() {
     const list = $('#shop-list'); list.replaceChildren();
@@ -156,6 +158,75 @@
     });
   }
   function selectShop(id) { selected = shops.find((shop) => shop.id === id) || null; selectedConversationId = null; message($('#shop-message'), ''); message($('#product-message'), ''); message($('#inbox-message'), ''); renderShop(); }
+  function setSetupBadge(node, text, ready) {
+    node.textContent = text;
+    node.classList.toggle('setup-incomplete', !ready);
+  }
+  async function loadModelStatus() {
+    try {
+      const status = await api('/admin/api/model/status');
+      setSetupBadge($('#model-api-state'), status.configured ? 'Đã cấu hình' : 'Chưa cấu hình', status.configured);
+      $('#model-api-description').textContent = status.configured
+        ? 'Máy chủ đã nhận cấu hình model ' + status.model + '. Khóa API không hiển thị trong trình duyệt.'
+        : 'Chưa có khóa API trên máy chủ. Khóa API được lưu ở Vercel, không nhập vào trang chat hoặc trình duyệt.';
+    } catch (error) {
+      setSetupBadge($('#model-api-state'), 'Không kiểm tra được', false);
+      $('#model-api-description').textContent = error.message;
+    }
+  }
+  async function loadShopKnowledge(shopId) {
+    try {
+      const data = await api('/admin/api/shops/' + shopId + '/knowledge');
+      setSetupBadge(
+        $('#knowledge-state'),
+        !data.synced ? 'Chưa đồng bộ' : data.api_verified ? 'Sẵn sàng' : 'Cần kiểm tra API',
+        Boolean(data.synced && data.api_verified),
+      );
+      if (data.source_url) $('#knowledge-url').value = data.source_url;
+      $('#knowledge-details').textContent = data.synced
+        ? data.page_count + ' trang · cập nhật ' + formatTimestamp(data.synced_at) + ' · ' + Number(data.content_length).toLocaleString('vi-VN') + ' ký tự · ' + (data.api_verified ? 'API đã kiểm tra' : 'cần kiểm tra API')
+        : 'Chat chỉ mở sau khi API kết nối và website đã đồng bộ.';
+    } catch (error) {
+      setSetupBadge($('#knowledge-state'), 'Lỗi tải trạng thái', false);
+      $('#knowledge-details').textContent = error.message;
+    }
+  }
+  $('#test-model-api').addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    message($('#model-api-message'), 'Đang thử kết nối bằng yêu cầu kiểm tra ngắn…');
+    try {
+      const result = await api('/admin/api/model/test', { method: 'POST', body: '{}' });
+      setSetupBadge($('#model-api-state'), 'API hoạt động', true);
+      $('#model-api-description').textContent = 'Đã kết nối model ' + result.model + '. Khóa API vẫn được giữ ở máy chủ.';
+      message($('#model-api-message'), 'Kết nối API thành công.', true);
+      if (selected) await loadShopKnowledge(selected.id);
+    } catch (error) {
+      setSetupBadge($('#model-api-state'), 'Chưa kết nối', false);
+      message($('#model-api-message'), error.message);
+    } finally { button.disabled = false; }
+  });
+  $('#knowledge-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!selected) return;
+    const button = $('#sync-knowledge');
+    button.disabled = true;
+    setSetupBadge($('#knowledge-state'), 'Đang đọc website…', false);
+    message($('#knowledge-message'), 'Đang đọc nội dung công khai trong cùng tên miền…');
+    try {
+      const data = await api('/admin/api/shops/' + selected.id + '/knowledge/sync', {
+        method: 'POST',
+        body: JSON.stringify({ source_url: $('#knowledge-url').value.trim() }),
+      });
+      setSetupBadge($('#knowledge-state'), 'Đã đồng bộ', true);
+      $('#knowledge-url').value = data.source_url;
+      $('#knowledge-details').textContent = data.page_count + ' trang · cập nhật ' + formatTimestamp(data.synced_at) + ' · ' + Number(data.content_length).toLocaleString('vi-VN') + ' ký tự · API đã kiểm tra';
+      message($('#knowledge-message'), 'Đã kiểm tra API và cập nhật nguồn website. Trợ lý có thể nhận câu hỏi để tạo bản nháp.', true);
+    } catch (error) {
+      setSetupBadge($('#knowledge-state'), 'Chưa đồng bộ', false);
+      message($('#knowledge-message'), error.message);
+    } finally { button.disabled = false; }
+  });
   async function loadShops(preferredId) {
     shops = await api('/admin/api/shops');
     const next = shops.find((shop) => shop.id === preferredId) || shops.find((shop) => shop.id === selected?.id) || shops[0] || null;
@@ -413,4 +484,3 @@
   $('#copy-embed').addEventListener('click', () => selected && copy(embedCode(selected), $('#shop-message')));
   checkLogin();
 })();
-

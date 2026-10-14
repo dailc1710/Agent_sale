@@ -596,4 +596,3 @@ def admin_reject_public_draft(
     db: Annotated[Session, Depends(get_platform_db)],
 ) -> dict[str, str]:
     return _decide_public_draft(shop_id, draft_id, "rejected", username, request, db)
-

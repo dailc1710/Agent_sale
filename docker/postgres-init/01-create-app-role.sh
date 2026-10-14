@@ -11,4 +11,3 @@ CREATE ROLE hermes_app
 ALTER DATABASE hermes OWNER TO hermes_app;
 GRANT ALL ON SCHEMA public TO hermes_app;
 SQL
-

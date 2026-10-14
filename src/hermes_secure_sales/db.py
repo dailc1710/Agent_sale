@@ -83,4 +83,3 @@ def enter_tenant_scope(session: Session, tenant_id: str) -> None:
             text("SELECT set_config('app.tenant_id', :tenant_id, true)"),
             {"tenant_id": tenant_id},
         )
-

@@ -125,4 +125,3 @@ def downgrade() -> None:
                 f"WITH CHECK ({tenant_expression}::text = current_setting('app.tenant_id', true))"
             )
         )
-

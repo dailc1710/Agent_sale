@@ -4,6 +4,7 @@ import hmac
 import json
 import time
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -35,9 +36,11 @@ from hermes_secure_sales.models import (
     PublicChatSession,
     ReplyDraft,
     Shop,
+    ShopKnowledge,
     Tenant,
 )
 from hermes_secure_sales import secure_shop_admin
+from hermes_secure_sales import customer_chat
 from hermes_secure_sales import hermes as hermes_module
 from hermes_secure_sales.hermes import HermesClient
 from hermes_secure_sales import pii_crypto
@@ -49,17 +52,45 @@ class FakeHermes:
         self.messages: list[str] = []
         self.products: list[list[dict[str, str]]] = []
         self.histories: list[list[dict[str, str]]] = []
+        self.website_contexts: list[str] = []
 
     async def generate(
         self,
         customer_message: str,
         products: list[dict[str, str]],
         history: list[dict[str, str]] | None = None,
+        website_context: str = "",
     ) -> str:
         self.messages.append(customer_message)
         self.products.append(products)
         self.histories.append(history or [])
+        self.website_contexts.append(website_context)
         return "Xin chào, email an@example.test, sản phẩm Demo có giá 100 VND."
+
+
+def enable_public_assistant(monkeypatch, TestSession, tenant_id) -> SimpleNamespace:
+    test_settings = SimpleNamespace(
+        hermes_api_key="test-key",
+        hermes_api_url="https://model.example.test",
+        hermes_model="test-model",
+        public_rate_limit_per_minute=30,
+        public_session_hours=8,
+    )
+    with TestSession() as db:
+        shop = db.scalar(select(Shop).where(Shop.tenant_id == tenant_id, Shop.slug == "demo-shop"))
+        db.add(
+            ShopKnowledge(
+                tenant_id=tenant_id,
+                shop_id=shop.id,
+                source_url="https://clinic.example.test/",
+                content="Thông tin dịch vụ công khai. Hotline 0974 508 479.",
+                page_count=1,
+                api_fingerprint=hermes_module.api_config_fingerprint(test_settings),
+            )
+        )
+        db.commit()
+    monkeypatch.setattr(customer_chat, "get_settings", lambda: test_settings)
+    return test_settings
 
 
 def test_hermes_client_has_local_mock_mode_without_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -69,7 +100,7 @@ def test_hermes_client_has_local_mock_mode_without_api_key(monkeypatch: pytest.M
         lambda: type("Settings", (), {"hermes_api_key": ""})(),
     )
     coroutine = HermesClient().generate(
-        "Tôi muốn tìm áo",
+        "Tôi muốn tìm Áo linen",
         [{"sku": "A1", "name": "Áo linen", "description": "Nhẹ mát", "price": "590000.00", "currency": "VND"}],
     )
     with pytest.raises(StopIteration) as result:
@@ -222,6 +253,17 @@ def test_chatbot_page_is_available_without_external_assets(hub) -> None:
 
 def test_public_chat_waits_for_shop_approval_and_redacts_pii(hub, monkeypatch: pytest.MonkeyPatch) -> None:
     client, TestSession, tenant_id, _customer_id, _users, hermes = hub
+    monkeypatch.setattr(
+        customer_chat,
+        "get_settings",
+        lambda: SimpleNamespace(
+            hermes_api_key="",
+            hermes_api_url="",
+            hermes_model="",
+            public_rate_limit_per_minute=30,
+            public_session_hours=8,
+        ),
+    )
     assert client.get("/chat/demo-shop").status_code == 200
     chat_page = client.get("/chat/demo-shop")
     assert "/static/public-chat.js" in chat_page.text
@@ -234,6 +276,7 @@ def test_public_chat_waits_for_shop_approval_and_redacts_pii(hub, monkeypatch: p
     info = client.get("/public/shops/demo-shop")
     assert info.status_code == 200
     assert info.json()["name"] == "Demo Shop"
+    assert info.json()["assistant_ready"] is False
     assert len(info.json()["products"]) == 1
     assert "tenant_id" not in info.json()
 
@@ -242,6 +285,34 @@ def test_public_chat_waits_for_shop_approval_and_redacts_pii(hub, monkeypatch: p
     token = created.json()["session_token"]
     headers = {"Authorization": f"Bearer {token}"}
     assert client.get("/public/sessions/me", headers=headers).json() == {"messages": []}
+    not_ready = client.post(
+        "/public/sessions/messages",
+        headers=headers,
+        json={"request_id": str(uuid.uuid4()), "message": "Thông tin dịch vụ là gì?"},
+    )
+    assert not_ready.status_code == 503
+    assert hermes.messages == []
+    api_settings = enable_public_assistant(monkeypatch, TestSession, tenant_id)
+    assert client.get("/public/shops/demo-shop").json()["assistant_ready"] is True
+    monkeypatch.setattr(
+        customer_chat,
+        "get_settings",
+        lambda: SimpleNamespace(
+            hermes_api_key="rotated-key",
+            hermes_api_url=api_settings.hermes_api_url,
+            hermes_model=api_settings.hermes_model,
+            public_rate_limit_per_minute=30,
+            public_session_hours=8,
+        ),
+    )
+    assert client.get("/public/shops/demo-shop").json()["assistant_ready"] is False
+    rotated_key_chat = client.post(
+        "/public/sessions/messages",
+        headers=headers,
+        json={"request_id": str(uuid.uuid4()), "message": "Thông tin dịch vụ là gì?"},
+    )
+    assert rotated_key_chat.status_code == 503
+    monkeypatch.setattr(customer_chat, "get_settings", lambda: api_settings)
     response = client.post(
         "/public/sessions/messages",
         headers=headers,
@@ -256,6 +327,8 @@ def test_public_chat_waits_for_shop_approval_and_redacts_pii(hub, monkeypatch: p
     assert response.json()["mode"] == "mock"
     assert "person@example.test" not in hermes.messages[0]
     assert "0901234567" not in hermes.messages[0]
+    assert "0974 508 479" not in hermes.website_contexts[0]
+    assert "[PHONE_1]" in hermes.website_contexts[0] or "[ID_1]" in hermes.website_contexts[0]
     history = client.get("/public/sessions/me", headers=headers).json()["messages"]
     assert [item["role"] for item in history] == ["user"]
     assert history[0]["status"] == "pending"
@@ -373,6 +446,7 @@ def test_public_chat_waits_for_shop_approval_and_redacts_pii(hub, monkeypatch: p
 def test_staff_inbox_is_shop_scoped_redacts_staff_reply_and_shows_it_to_customer(hub, monkeypatch: pytest.MonkeyPatch) -> None:
     client, TestSession, _tenant_id, _customer_id, _users, _hermes = hub
     assert client.get("/admin/api/shops").status_code == 401
+    enable_public_assistant(monkeypatch, TestSession, _tenant_id)
 
     session_response = client.post("/public/shops/demo-shop/sessions")
     assert session_response.status_code == 201
@@ -970,4 +1044,3 @@ def test_webhook_events_keep_independent_pending_drafts(hub) -> None:
         drafts = list(db.scalars(select(ReplyDraft).where(ReplyDraft.conversation_id == conversation_id)))
         assert len(drafts) == 2
         assert {draft.source for draft in drafts} == {"webhook"}
-

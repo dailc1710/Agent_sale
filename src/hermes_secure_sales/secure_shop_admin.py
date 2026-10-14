@@ -26,7 +26,7 @@ from .dependencies import (
     get_public_session_db,
     get_public_shop_db,
 )
-from .hermes import HermesClient, HermesError
+from .hermes import HermesClient, HermesError, api_config_fingerprint
 from .models import (
     ConsultationRequest,
     GoogleFormSubmission,
@@ -36,6 +36,7 @@ from .models import (
     Product,
     ReplyDraft,
     Shop,
+    ShopKnowledge,
     Tenant,
     now_utc,
 )
@@ -48,7 +49,9 @@ from .schemas import (
     AdminShopCreate,
     AdminShopUpdate,
     AdminStaffMessageIn,
+    WebsiteSyncIn,
 )
+from .website_knowledge import WebsiteFetchError, read_public_website
 
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -745,6 +748,48 @@ def admin_me(identity: Annotated[tuple[str, str], Depends(require_staff)]) -> di
     return {"username": username, "role": role}
 
 
+@admin_router.get("/admin/api/model/status")
+def admin_model_status(
+    _username: Annotated[str, Depends(require_admin)],
+) -> dict[str, str | bool]:
+    settings = get_settings()
+    configured = bool(
+        settings.hermes_api_key.strip()
+        and settings.hermes_api_url.strip()
+        and settings.hermes_model.strip()
+    )
+    return {
+        "configured": configured,
+        "model": settings.hermes_model if configured else "",
+    }
+
+
+@admin_router.post("/admin/api/model/test")
+async def admin_test_model(
+    request: Request,
+    _username: Annotated[str, Depends(require_admin)],
+    hermes: Annotated[HermesClient, Depends(get_hermes_client)],
+    db: Annotated[Session, Depends(get_platform_db)],
+) -> dict[str, str]:
+    _admin_csrf_check(request)
+    rate_limiter.check("model-api-test", 5)
+    settings = get_settings()
+    if not settings.hermes_api_key.strip():
+        raise HTTPException(
+            status_code=503,
+            detail="Chưa cấu hình HERMES_API_KEY trên Vercel. Hãy lưu khóa ở Environment Variables rồi redeploy.",
+        )
+    try:
+        await hermes.test_connection()
+    except HermesError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    db.execute(
+        update(ShopKnowledge).values(api_fingerprint=api_config_fingerprint(settings))
+    )
+    db.commit()
+    return {"status": "connected", "model": settings.hermes_model}
+
+
 @admin_router.get("/admin/api/shops")
 def admin_list_shops(
     request: Request,
@@ -758,6 +803,95 @@ def admin_list_shops(
         {**_shop_payload(shop, request), "products": [_product_payload(p) for p in _products(db, shop.tenant_id)]}
         for shop in shops
     ]
+
+
+@admin_router.get("/admin/api/shops/{shop_id}/knowledge")
+def admin_get_shop_knowledge(
+    shop_id: UUID,
+    _username: Annotated[str, Depends(require_admin)],
+    db: Annotated[Session, Depends(get_platform_db)],
+) -> dict:
+    shop = _shop_id_or_404(db, shop_id)
+    knowledge = db.scalar(
+        select(ShopKnowledge).where(
+            ShopKnowledge.tenant_id == shop.tenant_id,
+            ShopKnowledge.shop_id == shop.id,
+        )
+    )
+    if knowledge is None:
+        return {
+            "synced": False,
+            "api_verified": False,
+            "source_url": "",
+            "page_count": 0,
+            "content_length": 0,
+            "synced_at": None,
+        }
+    return {
+        "synced": bool(knowledge.content.strip()),
+        "api_verified": knowledge.api_fingerprint == api_config_fingerprint(get_settings()),
+        "source_url": knowledge.source_url,
+        "page_count": knowledge.page_count,
+        "content_length": len(knowledge.content),
+        "synced_at": knowledge.synced_at.isoformat(),
+    }
+
+
+@admin_router.post("/admin/api/shops/{shop_id}/knowledge/sync")
+async def admin_sync_shop_knowledge(
+    shop_id: UUID,
+    data: WebsiteSyncIn,
+    request: Request,
+    _username: Annotated[str, Depends(require_admin)],
+    db: Annotated[Session, Depends(get_platform_db)],
+    hermes: Annotated[HermesClient, Depends(get_hermes_client)],
+) -> dict:
+    _admin_csrf_check(request)
+    rate_limiter.check(f"website-sync:{shop_id}", 3)
+    shop = _shop_id_or_404(db, shop_id)
+    try:
+        await hermes.test_connection()
+    except HermesError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    fingerprint = api_config_fingerprint(get_settings())
+    try:
+        result = await read_public_website(data.source_url)
+    except WebsiteFetchError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+    safe_content = redact_pii(str(result["content"]))
+    knowledge = db.scalar(
+        select(ShopKnowledge).where(
+            ShopKnowledge.tenant_id == shop.tenant_id,
+            ShopKnowledge.shop_id == shop.id,
+        )
+    )
+    if knowledge is None:
+        knowledge = ShopKnowledge(
+            tenant_id=shop.tenant_id,
+            shop_id=shop.id,
+            source_url=str(result["source_url"]),
+            content=safe_content,
+            page_count=int(result["page_count"]),
+            api_fingerprint=fingerprint,
+            synced_at=now_utc(),
+        )
+        db.add(knowledge)
+    else:
+        knowledge.source_url = str(result["source_url"])
+        knowledge.content = safe_content
+        knowledge.page_count = int(result["page_count"])
+        knowledge.api_fingerprint = fingerprint
+        knowledge.synced_at = now_utc()
+    db.commit()
+    db.refresh(knowledge)
+    return {
+        "synced": True,
+        "api_verified": True,
+        "source_url": knowledge.source_url,
+        "page_count": knowledge.page_count,
+        "content_length": len(knowledge.content),
+        "synced_at": knowledge.synced_at.isoformat(),
+    }
 
 
 @admin_router.post("/admin/api/shops", status_code=status.HTTP_201_CREATED)
@@ -985,4 +1119,3 @@ def admin_reject_public_draft(
     db: Annotated[Session, Depends(get_platform_db)],
 ) -> dict[str, str]:
     return _decide_public_draft(shop_id, draft_id, "rejected", username, request, db)
-

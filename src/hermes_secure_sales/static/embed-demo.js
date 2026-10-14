@@ -13,4 +13,3 @@
   $('#copy-snippet').addEventListener('click', async () => { try { await navigator.clipboard.writeText(code()); $('#copy-status').textContent = 'Đã sao chép mã nhúng.'; $('#copy-status').classList.add('ok'); } catch { $('#copy-status').textContent = 'Trình duyệt chưa cho phép sao chép. Hãy sao chép mã hiển thị ở trên.'; } });
   update();
 })();
-

@@ -93,4 +93,3 @@ function hmacHex_(message, secret) {
     .map((byte) => ('0' + ((byte + 256) % 256).toString(16)).slice(-2))
     .join('');
 }
-

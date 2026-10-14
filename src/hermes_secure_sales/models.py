@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKeyConstraint,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -54,6 +55,25 @@ class Shop(Base):
     allowed_origins: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, nullable=False)
+
+
+class ShopKnowledge(Base):
+    """Public website reference text stored separately for each tenant and shop."""
+
+    __tablename__ = "shop_knowledge"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "shop_id", name="uq_shop_knowledge_tenant_shop"),
+        ForeignKeyConstraint(["tenant_id", "shop_id"], ["shops.tenant_id", "shops.id"], ondelete="CASCADE"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), nullable=False, index=True)
+    shop_id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    source_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    page_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    api_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, nullable=False)
 
 
 class PublicChatSession(Base):
@@ -275,4 +295,3 @@ class WebhookEvent(Base):
     external_event_id: Mapped[str] = mapped_column(String(160), primary_key=True)
     message_id: Mapped[uuid.UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, nullable=False)
-

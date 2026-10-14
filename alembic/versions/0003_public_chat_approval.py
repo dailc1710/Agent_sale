@@ -61,4 +61,3 @@ def downgrade() -> None:
     with op.batch_alter_table("reply_drafts") as batch_op:
         batch_op.drop_index("uq_reply_drafts_one_pending_per_conversation")
         batch_op.drop_column("source")
-

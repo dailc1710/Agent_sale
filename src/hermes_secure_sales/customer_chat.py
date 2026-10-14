@@ -27,7 +27,7 @@ from .hub_admin import (
 from .config import get_settings
 from .db import enter_tenant_scope
 from .dependencies import get_hermes_client, get_public_session_db, get_public_shop_db
-from .hermes import HermesClient, HermesError
+from .hermes import HermesClient, HermesError, api_config_fingerprint
 from .models import (
     ConsultationRequest,
     Conversation,
@@ -37,6 +37,7 @@ from .models import (
     PublicChatSession,
     ReplyDraft,
     Shop,
+    ShopKnowledge,
     now_utc,
 )
 from .pii_crypto import PIIEncryptionUnavailable, encrypt_pii
@@ -84,12 +85,33 @@ def public_shop_info(
     app_origin = _origin(str(request.base_url).rstrip("/"))
     embed_origin = _check_embed_origin(shop, x_embed_origin, app_origin) if x_embed_origin else None
     enter_tenant_scope(db, str(shop.tenant_id))
+    knowledge = db.scalar(
+        select(ShopKnowledge).where(
+            ShopKnowledge.tenant_id == shop.tenant_id,
+            ShopKnowledge.shop_id == shop.id,
+        )
+    )
+    settings = get_settings()
+    assistant_ready = bool(
+        settings.hermes_api_key.strip()
+        and settings.hermes_api_url.strip()
+        and settings.hermes_model.strip()
+        and knowledge is not None
+        and knowledge.content.strip()
+        and knowledge.api_fingerprint == api_config_fingerprint(settings)
+    )
     return {
         "slug": shop.slug,
         "name": shop.display_name,
         "welcome_message": shop.welcome_message,
         "theme_color": shop.theme_color,
         "mode": _mock_status(),
+        "assistant_ready": assistant_ready,
+        "setup_message": (
+            ""
+            if assistant_ready
+            else "Trợ lý đang được quản trị viên kết nối API và cập nhật nguồn website. Vui lòng quay lại sau."
+        ),
         "products": [_public_product_payload(item) for item in _products(db, shop.tenant_id, True)[:30]],
         "embed_origin": embed_origin,
     }
@@ -374,6 +396,24 @@ async def public_chat_message(
         db, authorization, x_embed_origin, _origin(str(request.base_url).rstrip("/"))
     )
     rate_limiter.check(f"message-session:{chat_session.id}", settings.public_rate_limit_per_minute)
+    knowledge = db.scalar(
+        select(ShopKnowledge).where(
+            ShopKnowledge.tenant_id == chat_session.tenant_id,
+            ShopKnowledge.shop_id == chat_session.shop_id,
+        )
+    )
+    if (
+        not settings.hermes_api_key.strip()
+        or not settings.hermes_api_url.strip()
+        or not settings.hermes_model.strip()
+        or knowledge is None
+        or not knowledge.content.strip()
+        or knowledge.api_fingerprint != api_config_fingerprint(settings)
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail="Trợ lý đang được quản trị viên kết nối API và cập nhật nguồn website. Vui lòng quay lại sau.",
+        )
 
     safe_message = redact_pii(data.message)
     user_message = db.scalar(
@@ -488,7 +528,14 @@ async def public_chat_message(
     ]
     history = _approved_public_history(db, chat_session, data.request_id)
     try:
-        reply = redact_pii(await hermes.generate(safe_message, product_context, history))
+        reply = redact_pii(
+            await hermes.generate(
+                safe_message,
+                product_context,
+                history,
+                website_context=redact_pii(knowledge.content),
+            )
+        )
     except HermesError:
         raise HTTPException(status_code=502, detail="Chatbot tạm thời chưa trả lời được. Vui lòng thử lại.") from None
 
@@ -516,4 +563,3 @@ async def public_chat_message(
     if draft is None:
         raise HTTPException(status_code=502, detail="Không thể lưu bản nháp phản hồi")
     return {"status": draft.status, "mode": _mock_status()}
-

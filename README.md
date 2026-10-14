@@ -38,7 +38,11 @@ Hồ sơ cơ sở mới bắt đầu với danh mục trống để tránh hiể
 
 Docker Compose chạy migration PostgreSQL trước API; API mặc định lắng nghe cổng 8000. Đưa ứng dụng sau reverse proxy có HTTPS trước khi chia sẻ ra Internet.
 
+Khi triển khai trên Vercel với PostgreSQL đã có sẵn, chạy lệnh Alembic upgrade head một lần với DATABASE_URL của cơ sở dữ liệu đó trước khi dùng tính năng đồng bộ website.
+
 ## Hermes và mock mode
+
+Tab Cài đặt kiểm tra API bằng một yêu cầu thử ngắn; khóa API không được trả về trình duyệt. Chat công khai chỉ mở sau khi API đang dùng được kiểm tra thành công và admin đồng bộ website nguồn với đúng cấu hình API hiện tại. Khi thay URL, model hoặc khóa API, phải kiểm tra lại kết nối. Đồng bộ được thực hiện thủ công, chỉ đọc HTTPS công khai cùng tên miền, tối đa 8 trang và 24.000 ký tự. Nội dung được lọc các chuỗi PII phổ biến trước khi lưu, tách riêng theo tenant/shop và gửi tới nhà cung cấp API làm ngữ cảnh khi tạo bản nháp; ứng dụng không dùng nội dung này để huấn luyện hay tinh chỉnh model. Bộ đọc bỏ qua biểu mẫu, vùng điều hướng và các phần về triệu chứng, bệnh lý, điều trị, câu hỏi thường gặp, đánh giá; mọi bản nháp vẫn cần nhân viên duyệt trước khi khách thấy.
 
 Điền `HERMES_API_URL`, `HERMES_API_KEY` và `HERMES_MODEL` để dùng Hermes qua giao thức Chat Completions tại `/v1/chat/completions`. Khi chưa có khóa, mock mode tạo bản nháp an toàn dựa trên danh mục dịch vụ đã bật và không gọi dịch vụ ngoài. Nếu tin nhắn hoặc lịch sử chứa dấu hiệu về triệu chứng, thuốc hay kết quả xét nghiệm, hệ thống chuyển sang phản hồi hướng dẫn chung mà không gửi phần đó tới Hermes.
 
@@ -86,4 +90,3 @@ Test dùng SQLite in-memory và dữ liệu tổng hợp, không gọi Hermes th
 ## Chia sẻ chatbot ngoài máy local
 
 `http://127.0.0.1:8765` và `localhost` chỉ truy cập trên máy đang chạy ứng dụng. Muốn có link dùng thật, cần deploy API và PostgreSQL lên hosting, trỏ domain của bạn tới hosting, bật HTTPS, đặt secrets và cấu hình origin website trong dashboard. Sau deploy, dashboard sẽ sinh link theo domain đó. Dự án hiện chưa được deploy và chưa có URL public nào được xác nhận.
-

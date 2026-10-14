@@ -103,6 +103,12 @@ class AdminShopUpdate(BaseModel):
     enabled: bool
 
 
+class WebsiteSyncIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_url: str = Field(min_length=12, max_length=2048)
+
+
 class AdminProductCreate(BaseModel):
     sku: str = Field(min_length=1, max_length=80)
     name: str = Field(min_length=1, max_length=200)
@@ -187,4 +193,3 @@ class AdminStaffMessageIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     message: str = Field(min_length=1, max_length=3000)
-

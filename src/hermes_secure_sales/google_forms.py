@@ -107,4 +107,3 @@ async def receive_google_form_submission(
         raise HTTPException(status_code=409, detail="Could not save Google Forms response") from None
 
     return {"status": "imported"}
-

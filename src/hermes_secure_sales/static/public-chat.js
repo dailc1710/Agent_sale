@@ -62,13 +62,16 @@
   }
 
   function syncComposer() {
-    const disabled = busy || awaitingApproval;
+    const setupIncomplete = Boolean(shop && !shop.assistant_ready);
+    const disabled = busy || awaitingApproval || setupIncomplete;
     $('#chat-input').disabled = disabled;
     $('#chat-send').disabled = disabled;
     $('#chat-send').classList.toggle('is-busy', busy);
     $('#chat-send').setAttribute('aria-label', busy ? 'Đang gửi câu hỏi' : 'Gửi câu hỏi');
     $('#chat-send').setAttribute('aria-busy', busy ? 'true' : 'false');
-    $('#chat-input').placeholder = awaitingApproval ? 'Đang chờ nhân viên duyệt phản hồi…' : 'Hỏi về dịch vụ…';
+    $('#chat-input').placeholder = setupIncomplete
+      ? 'Trợ lý đang được thiết lập…'
+      : awaitingApproval ? 'Đang chờ nhân viên duyệt phản hồi…' : 'Hỏi về dịch vụ…';
   }
 
   function resizeChatInput() {
@@ -160,6 +163,15 @@
     $('#shop-name').textContent = displayName || profileName;
     $('#shop-subtitle').textContent = 'Thông tin dịch vụ · Hỗ trợ tư vấn';
     $('#mode-note').textContent = shop.mode === 'mock' ? 'Bản thử nghiệm · ' : '';
+    $('#chat-status-label').textContent = shop.assistant_ready ? 'Trực tuyến' : 'Đang thiết lập';
+    $('#chat-status-badge').classList.toggle('chat-not-ready', !shop.assistant_ready);
+    if (!shop.assistant_ready) {
+      showError(shop.setup_message || 'Trợ lý đang được quản trị viên thiết lập. Vui lòng quay lại sau.');
+      $('#chat-error').classList.add('chat-setup-note');
+    } else {
+      showError('');
+      $('#chat-error').classList.remove('chat-setup-note');
+    }
     renderProducts();
 
     if (!token) await startSession();
@@ -254,4 +266,3 @@
     $('#chat-send').disabled = true;
   });
 })();
-

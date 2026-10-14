@@ -54,4 +54,3 @@ def webhook_event_key(tenant_id: UUID, event_id: str) -> str:
         event_id.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
-

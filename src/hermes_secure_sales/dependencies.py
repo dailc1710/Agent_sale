@@ -56,4 +56,3 @@ def get_public_session_db(
 
 def get_hermes_client() -> HermesClient:
     return HermesClient()
-

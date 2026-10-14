@@ -35,4 +35,3 @@ entrypoint = "src.hermes_secure_sales.api:app"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-

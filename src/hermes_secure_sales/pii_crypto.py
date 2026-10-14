@@ -37,4 +37,3 @@ def decrypt_pii(value: str) -> str:
         raise PIIEncryptionUnavailable(
             "Không thể giải mã dữ liệu; kiểm tra PII_ENCRYPTION_KEY"
         ) from None
-

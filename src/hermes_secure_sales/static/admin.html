@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hộp thư tư vấn · Hermes Hub</title>
-<link rel="stylesheet" href="/static/portal.css?v=clinic-chat-ui10-20261014">
+<link rel="stylesheet" href="/static/portal.css?v=clinic-chat-ui11-20261014">
 </head>
 <body class="admin-page">
   <main class="portal-shell admin-portal-shell">
@@ -127,12 +127,35 @@
     <section id="shop-settings-view" class="shop-settings-view" hidden>
       <header class="settings-topbar"><button id="settings-back" class="button-outline" type="button">← Quay lại hộp thư</button><div><h1>Cài đặt cơ sở y tế</h1><p>Trợ lý thông tin · Dịch vụ và đặt lịch</p></div><span class="top-spacer"></span><a class="soft-link" href="https://khamtieuhoa.bvtamtrisaigon.com.vn/" target="_blank" rel="noopener noreferrer">Website tham khảo ↗</a></header>
       <div class="settings-content">
-        <div id="empty-state"><h2>Bắt đầu với cơ sở y tế</h2><p class="section-sub">Tạo hồ sơ cơ sở để cấu hình trang chat tư vấn, danh mục dịch vụ và mã nhúng.</p><button class="button-green" id="empty-new-shop" type="button">Tạo hồ sơ thử nghiệm</button></div>
+        <section id="model-api-section" class="admin-section">
+          <div class="section-head">
+            <div><h2>Kết nối API trợ lý</h2><p class="section-sub">Kết nối máy chủ AI để tạo bản nháp từ câu hỏi và nguồn website đã đồng bộ.</p></div>
+            <span id="model-api-state" class="chat-status">Đang kiểm tra</span>
+          </div>
+          <div class="model-api-row">
+            <p id="model-api-description" class="section-sub">Khóa API được lưu ở máy chủ; không nhập khóa vào trang chat hoặc trình duyệt.</p>
+            <button id="test-model-api" class="button-outline" type="button">Kiểm tra kết nối</button>
+          </div>
+          <p class="field-hint">Trên Vercel, thêm HERMES_API_URL, HERMES_API_KEY và HERMES_MODEL vào Environment Variables, rồi redeploy. HERMES_API_URL là URL gốc của nhà cung cấp; ứng dụng tự nối /v1/chat/completions. API cần tương thích Chat Completions.</p>
+          <div id="model-api-message" class="status-message" role="status"></div>
+        </section>
+        <div id="empty-state"><h2>Bắt đầu với cơ sở y tế</h2><p class="section-sub">Tạo hồ sơ cơ sở, kết nối API và đồng bộ website tham khảo trước khi mở chat cho khách.</p><button class="button-green" id="empty-new-shop" type="button">Tạo hồ sơ cơ sở</button></div>
         <div id="shop-editor" hidden>
           <section class="clinic-info-card" aria-label="Thông tin website tham khảo">
             <div class="clinic-info-heading"><span class="clinic-mark" aria-hidden="true">+</span><div><span class="clinic-eyebrow">MẪU THAM KHẢO · BẢN THỬ NGHIỆM</span><h2>Khoa Tiêu hóa &amp; Nội soi</h2><p>Trợ lý chỉ cung cấp thông tin dịch vụ và hỗ trợ gửi yêu cầu đặt lịch.</p></div></div>
             <div class="clinic-info-details"><div><span>Địa chỉ công khai</span><strong>171/3 Trường Chinh, P. Đông Hưng Thuận, TP. Hồ Chí Minh</strong></div><div><span>Hotline trên website</span><a href="tel:+84974508479">0974 508 479</a></div></div>
             <p class="clinic-info-note">Đây là cấu hình thử nghiệm dựa trên nội dung website tham khảo; cần cơ sở xác nhận trước khi đưa vào sử dụng.</p>
+          </section>
+          <section class="admin-section">
+            <div class="section-head">
+              <div><h2>Đọc website tham khảo</h2><p class="section-sub">Đồng bộ thông tin công khai để trợ lý dùng làm ngữ cảnh khi tạo câu trả lời.</p></div>
+              <span id="knowledge-state" class="chat-status">Chưa đồng bộ</span>
+            </div>
+            <form id="knowledge-form" class="form-grid">
+              <div class="field wide"><label for="knowledge-url">Địa chỉ website</label><input id="knowledge-url" type="url" inputmode="url" value="https://khamtieuhoa.bvtamtrisaigon.com.vn/" required><p class="field-hint">Chỉ đọc trang HTTPS công khai cùng tên miền, tối đa 8 trang. Ứng dụng lọc PII phổ biến trước khi lưu/gửi API; nội dung được chuyển tới nhà cung cấp API để tạo bản nháp, không dùng để huấn luyện trong ứng dụng.</p></div>
+              <div class="field wide form-actions"><button id="sync-knowledge" class="button-green" type="submit">Đọc website &amp; cập nhật</button><span id="knowledge-details" class="field-hint">Chat chỉ mở sau khi API kết nối và website đã đồng bộ.</span></div>
+            </form>
+            <div id="knowledge-message" class="status-message" role="status"></div>
           </section>
           <section class="admin-section">
             <div class="section-head"><div><h2 id="shop-title">Thông tin cơ sở</h2><p class="section-sub">Cấu hình tên, lời chào và màu sắc trên trang trợ lý thông tin.</p></div><span id="shop-state" class="chat-status">Đang bật</span></div>
@@ -157,7 +180,6 @@
       </div>
     </section>
   </main>
-  <script src="/static/admin.js?v=clinic-chat-ui10-20261014" defer></script>
+  <script src="/static/admin.js?v=clinic-setup-ui11-20261014" defer></script>
 </body>
 </html>
-

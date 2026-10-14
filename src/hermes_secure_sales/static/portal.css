@@ -401,6 +401,13 @@
 .consultation-dialog .button-green{background:#128fbd}
 .consultation-dialog .button-green:hover{background:#087ba8}
 .lead-success{background:#eaf7f1;color:#24755c}
+.model-api-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.model-api-row .section-sub{margin:0}
+.settings-content .chat-status.setup-incomplete{background:#fff4df;color:#98671a}
+#knowledge-details{margin:0 0 0 4px}
+#knowledge-form .field-hint{margin-bottom:0}
+.chat-error.chat-setup-note{background:#fff8e8;color:#805d20}
+.chat-status.chat-not-ready{background:#fff4df;color:#98671a}
 @media(max-width:650px){
   .settings-content .admin-section{padding:18px 16px 20px}
   .clinic-info-card{padding:18px 16px}
@@ -461,4 +468,3 @@
   .chat-footnote{font-size:10.5px}
 }
 @media(prefers-reduced-motion:reduce){.chat-send.is-busy::after{animation-duration:1.8s}}
-

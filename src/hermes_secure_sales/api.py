@@ -557,4 +557,3 @@ def reject_draft(
     db.commit()
     db.refresh(draft)
     return draft
-

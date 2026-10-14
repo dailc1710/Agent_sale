@@ -125,4 +125,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     for table in ("webhook_events", "reply_drafts", "messages", "conversations", "customers", "products", "tenants"):
         op.drop_table(table)
-

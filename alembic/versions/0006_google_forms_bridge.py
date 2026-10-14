@@ -56,4 +56,3 @@ def downgrade() -> None:
     op.drop_index("ix_google_form_submissions_tenant_shop_submitted", table_name="google_form_submissions")
     op.drop_index("ix_google_form_submissions_tenant_id", table_name="google_form_submissions")
     op.drop_table("google_form_submissions")
-

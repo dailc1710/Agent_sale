@@ -59,4 +59,3 @@ def require_roles(*roles: str) -> Callable:
         return user
 
     return dependency
-
