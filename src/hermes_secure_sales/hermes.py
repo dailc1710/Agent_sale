@@ -21,6 +21,14 @@ def api_config_fingerprint(settings=None) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def chat_completions_url(base_url: str) -> str:
+    """Build the OpenAI-compatible endpoint from a provider base URL."""
+    normalized = base_url.strip().rstrip("/")
+    if normalized.endswith("/chat/completions"):
+        return normalized
+    return normalized + "/chat/completions"
+
+
 _HEALTH_DETAIL_MARKERS = (
     "toi bi",
     "minh bi",
@@ -94,7 +102,7 @@ class HermesClient:
             "temperature": 0,
             "max_tokens": 4,
         }
-        url = settings.hermes_api_url.rstrip("/") + "/v1/chat/completions"
+        url = chat_completions_url(settings.hermes_api_url)
         try:
             async with httpx.AsyncClient(timeout=settings.hermes_timeout_seconds) as client:
                 response = await client.post(
@@ -162,7 +170,7 @@ class HermesClient:
             ],
             "temperature": 0.2,
         }
-        url = settings.hermes_api_url.rstrip("/") + "/v1/chat/completions"
+        url = chat_completions_url(settings.hermes_api_url)
         try:
             async with httpx.AsyncClient(timeout=settings.hermes_timeout_seconds) as client:
                 response = await client.post(

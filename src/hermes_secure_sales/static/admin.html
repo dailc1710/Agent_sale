@@ -136,7 +136,7 @@
             <p id="model-api-description" class="section-sub">Khóa API được lưu ở máy chủ; không nhập khóa vào trang chat hoặc trình duyệt.</p>
             <button id="test-model-api" class="button-outline" type="button">Kiểm tra kết nối</button>
           </div>
-          <p class="field-hint">Trên Vercel, thêm HERMES_API_URL, HERMES_API_KEY và HERMES_MODEL vào Environment Variables, rồi redeploy. HERMES_API_URL là URL gốc của nhà cung cấp; ứng dụng tự nối /v1/chat/completions. API cần tương thích Chat Completions.</p>
+          <p class="field-hint">Trên Vercel, thêm HERMES_API_URL, HERMES_API_KEY và HERMES_MODEL vào Environment Variables, rồi redeploy. Với DeepSeek, đặt HERMES_API_URL=https://api.deepseek.com; ứng dụng tự nối /chat/completions. Nếu nhà cung cấp yêu cầu /v1, nhập URL gốc có /v1. API cần tương thích Chat Completions.</p>
           <div id="model-api-message" class="status-message" role="status"></div>
         </section>
         <div id="empty-state"><h2>Bắt đầu với cơ sở y tế</h2><p class="section-sub">Tạo hồ sơ cơ sở, kết nối API và đồng bộ website tham khảo trước khi mở chat cho khách.</p><button class="button-green" id="empty-new-shop" type="button">Tạo hồ sơ cơ sở</button></div>
