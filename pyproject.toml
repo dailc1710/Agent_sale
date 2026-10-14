@@ -29,6 +29,9 @@ where = ["src"]
 [tool.setuptools.package-data]
 hermes_secure_sales = ["static/*.html", "static/*.js", "static/*.css"]
 
+[tool.vercel]
+entrypoint = "src.hermes_secure_sales.api:app"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
