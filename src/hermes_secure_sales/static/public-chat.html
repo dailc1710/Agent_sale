@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#eaf7fb"><title>Trợ lý thông tin y tế</title><link rel="stylesheet" href="/static/portal.css?v=clinic-chat-ui9-20261014"></head>
+<body class="chat-page">
+  <main class="chat-frame" aria-label="Trò chuyện với cơ sở y tế">
+    <header class="chat-header"><div id="shop-avatar" class="shop-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 5v14M5 12h14"/></svg></div><div><h1 id="shop-name">Đang kết nối với cơ sở y tế…</h1><p id="shop-subtitle">Thông tin dịch vụ · Hỗ trợ tư vấn</p></div><span class="chat-status"><span class="live-dot"></span> Trực tuyến</span></header>
+    <div id="product-strip" class="product-strip" hidden></div>
+    <section id="chat-messages" class="chat-messages" aria-live="polite"><div class="chat-empty">Đang mở cuộc trò chuyện…</div></section>
+    <div id="chat-error" class="chat-error" role="status" hidden></div>
+    <form id="chat-form" class="chat-composer"><label class="visually-hidden" for="chat-input">Câu hỏi của bạn</label><textarea id="chat-input" maxlength="3000" rows="1" placeholder="Hỏi về dịch vụ…" required></textarea><button id="chat-send" class="chat-send" type="submit" aria-label="Gửi câu hỏi"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m21 3-7.2 18-3.4-7.4L3 10.2 21 3Z"/><path d="m10.4 13.6 4.8-4.8"/></svg></button></form>
+    <div class="chat-footnote"><span id="mode-note" class="mode-note"></span>Không nhập họ tên, số điện thoại hay thông tin sức khỏe vào chat. Bản trả lời chỉ hiện sau khi nhân viên duyệt.</div>
+    <dialog id="consultation-dialog" class="consultation-dialog" aria-labelledby="consultation-form-title">
+      <header><div><h2 id="consultation-form-title">Đăng ký tư vấn / đặt lịch</h2><p>Thông tin này được lưu riêng để nhân viên cơ sở xem; không chuyển tới Hermes.</p></div><button id="lead-close" class="lead-close" type="button" aria-label="Đóng biểu mẫu">×</button></header>
+      <div id="lead-success" class="lead-success" hidden>Đã lưu yêu cầu. Nhân viên cơ sở sẽ xem và liên hệ theo thời gian bạn mong muốn. Hệ thống không gửi tin nhắn tự động.</div>
+      <form id="consultation-form">
+        <div class="field"><label for="lead-name">Họ và tên</label><input id="lead-name" name="name" autocomplete="name" maxlength="120" required></div>
+        <div class="field"><label for="lead-phone">Số điện thoại</label><input id="lead-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" pattern="[0-9+() .-]{8,32}" maxlength="32" required></div>
+        <div class="field"><label for="lead-time">Thời gian mong muốn</label><input id="lead-time" name="desired_time" maxlength="120" placeholder="Ví dụ: chiều mai, khoảng 14:00" required></div>
+        <div class="field"><label for="lead-note">Ghi chú cần thiết cho buổi tư vấn</label><textarea id="lead-note" name="note" maxlength="1200" placeholder="Chỉ ghi thông tin tối thiểu cần cho việc liên hệ/đặt lịch."></textarea><p class="field-hint">Không gửi ảnh hồ sơ bệnh án, kết quả xét nghiệm hoặc giấy tờ định danh tại đây.</p></div>
+        <label class="lead-consent"><input id="lead-consent" name="consent" type="checkbox" required><span>Tôi đồng ý để nhân viên cơ sở y tế dùng thông tin này để liên hệ về yêu cầu tư vấn/đặt lịch. Thông tin được lưu riêng và không gửi tới Hermes.</span></label>
+        <div id="lead-error" class="status-message" role="status"></div>
+        <div class="lead-form-actions"><button id="lead-submit" class="button-green lead-submit" type="submit">Gửi yêu cầu đặt lịch</button></div>
+      </form>
+    </dialog>
+  </main>
+  <script src="/static/public-chat.js?v=clinic-chat-ui9-20261014" defer></script>
+</body></html>
+

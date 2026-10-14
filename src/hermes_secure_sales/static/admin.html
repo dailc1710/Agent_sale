@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hộp thư tư vấn · Hermes Hub</title>
+<link rel="stylesheet" href="/static/portal.css?v=clinic-chat-ui10-20261014">
+</head>
+<body class="admin-page">
+  <main class="portal-shell admin-portal-shell">
+    <section id="login-view" class="login-view" hidden>
+      <header class="portal-top">
+        <a class="brand-icon" href="/" aria-label="Về trang chủ">H</a>
+        <div><h1>Hermes Hub</h1><p>Hộp thư bán hàng riêng tư</p></div>
+        <span class="top-spacer"></span><a class="soft-link" href="/">← Trang chủ</a>
+      </header>
+      <div class="login-card">
+        <h2>Chào mừng trở lại</h2>
+        <p>Đăng nhập bằng tài khoản quản trị hoặc nhân viên đã được cấu hình cho máy chủ.</p>
+        <form id="login-form">
+          <div class="field"><label for="username">Tên đăng nhập</label><input id="username" name="username" autocomplete="username" required></div>
+          <div class="field"><label for="password">Mật khẩu</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+          <button class="button-green" type="submit">Đăng nhập</button>
+          <div id="login-message" class="status-message" role="status"></div>
+        </form>
+      </div>
+    </section>
+
+    <section id="dashboard-view" class="messenger-app" hidden>
+      <aside class="messenger-rail" aria-label="Điều hướng">
+        <a class="rail-brand" href="/" aria-label="Hermes Hub">H</a>
+        <button id="open-inbox" class="rail-link active" type="button" aria-label="Tin nhắn" title="Tin nhắn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h1a8 8 0 0 1 8 8Z"/><path d="M8 10h8M8 13h8M8 16h4"/></svg></button>
+        <button id="open-consultations" class="rail-link" type="button" aria-label="Yêu cầu tư vấn" title="Yêu cầu tư vấn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="m8 12 1.5 1.5L12 11M14 12h3m-9 5 1.5 1.5L12 16m2 1h3"/></svg></button>
+        <button id="open-shop-settings" class="rail-link" type="button" aria-label="Cài đặt cơ sở" title="Cài đặt cơ sở"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h5m4 0h7M4 12h9m4 0h3M4 18h3m4 0h9"/><circle cx="11" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg></button>
+        <span class="rail-spacer"></span>
+        <button id="logout" class="rail-link rail-logout" type="button" aria-label="Đăng xuất" title="Đăng xuất"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h5v16h-5"/><path d="m14 7-5 5 5 5M9 12h11"/></svg></button>
+      </aside>
+
+      <aside class="conversation-sidebar" aria-label="Danh sách cuộc trò chuyện">
+        <div class="sidebar-brand"><div class="sidebar-brand-mark">H</div><div><strong>Hermes Hub</strong><small id="sidebar-role-label">Sales inbox</small></div></div>
+        <div class="shop-switcher">
+          <div class="shop-switcher-heading"><span>CƠ SỞ Y TẾ</span><button id="new-shop" type="button" class="icon-button" aria-label="Thêm cơ sở" title="Thêm cơ sở">＋</button></div>
+          <div id="shop-list" class="shop-list"></div>
+        </div>
+        <div class="conversation-heading"><div><h1>Tin nhắn</h1><span id="conversation-count" class="conversation-count">0</span></div><button id="inbox-refresh" type="button" class="icon-button" aria-label="Làm mới" title="Làm mới">↻</button></div>
+        <label class="conversation-search"><span aria-hidden="true">⌕</span><input id="conversation-search" type="search" placeholder="Tìm cuộc trò chuyện" autocomplete="off"></label>
+        <div class="conversation-filters" role="group" aria-label="Lọc cuộc trò chuyện">
+          <button type="button" class="filter-chip active" data-inbox-filter="all">Tất cả</button>
+          <button type="button" class="filter-chip" data-inbox-filter="review">Chờ duyệt</button>
+        </div>
+        <div id="inbox-list" class="inbox-list" aria-label="Cuộc trò chuyện"></div>
+        <div class="sidebar-foot"><span class="privacy-dot"></span>Dữ liệu được tách riêng theo cơ sở</div>
+      </aside>
+
+      <main class="chat-workspace">
+        <div class="workspace-topbar"><div><strong id="active-shop-label">Hộp thư</strong><span id="active-shop-status">Chọn một cuộc trò chuyện</span></div><a id="public-chat-link" class="workspace-open-link" target="_blank" rel="noopener" hidden>Mở trang tư vấn ↗</a></div>
+        <div id="inbox-empty" class="inbox-empty">
+          <div class="empty-chat-icon">▤</div>
+          <h2>Chọn một cuộc trò chuyện</h2>
+          <p>Câu hỏi từ khách sẽ xuất hiện ở cột bên trái. Mở trang chat tư vấn để xem luồng trò chuyện.</p>
+          <a id="empty-public-chat-link" class="button-green" target="_blank" rel="noopener" hidden>Mở trang chat</a>
+        </div>
+        <div id="inbox-thread-panel" class="inbox-thread-panel" hidden>
+          <header class="thread-header">
+            <button id="thread-back" class="icon-button mobile-thread-back" type="button" aria-label="Quay lại danh sách">‹</button>
+            <div id="customer-avatar" class="customer-avatar" aria-hidden="true">K</div>
+            <div id="inbox-thread-title" class="inbox-thread-title"></div>
+            <span class="thread-header-spacer"></span>
+            <button id="toggle-customer-details" class="icon-button" type="button" aria-label="Thông tin khách hàng" title="Thông tin khách hàng" aria-pressed="false">ⓘ</button>
+            <a id="customer-chat-open" class="icon-button thread-open-link" target="_blank" rel="noopener" aria-label="Mở trang chat của khách" title="Mở trang chat">↗</a>
+          </header>
+          <div id="inbox-thread" class="inbox-thread" aria-live="polite"></div>
+          <div id="inbox-message" class="status-message inbox-status" role="status"></div>
+          <form id="staff-reply-form" class="staff-reply-form">
+            <label for="staff-reply">Tin nhắn của nhân viên</label>
+            <textarea id="staff-reply" maxlength="3000" placeholder="Soạn phản hồi cho khách…" required></textarea>
+            <div class="staff-reply-actions"><span>Chỉ gửi khi bạn bấm nút. Bản nháp Hermes đang chờ sẽ được thay thế.</span><button class="button-green" type="submit">Gửi cho khách</button></div>
+          </form>
+        </div>
+      </main>
+      <aside id="customer-details" class="customer-details" aria-label="Thông tin khách hàng" hidden>
+        <header class="customer-details-header">
+          <div><span class="details-eyebrow">HỒ SƠ CHAT</span><h2>Thông tin khách</h2></div>
+          <button id="close-customer-details" class="icon-button details-close" type="button" aria-label="Đóng thông tin khách">×</button>
+        </header>
+        <section class="customer-profile-card">
+          <div id="customer-details-avatar" class="customer-details-avatar" aria-hidden="true">K</div>
+          <h3 id="detail-customer-name">Khách</h3>
+          <p id="detail-customer-reference" class="customer-reference"></p>
+          <span class="privacy-badge"><span aria-hidden="true">◆</span> Hồ sơ ẩn danh</span>
+        </section>
+        <section class="customer-detail-section">
+          <h3>Cuộc trò chuyện</h3>
+          <dl class="customer-detail-list">
+            <div><dt>Trạng thái</dt><dd id="detail-session-status">—</dd></div>
+            <div><dt>Mã hội thoại</dt><dd id="detail-chat-code">—</dd></div>
+            <div><dt>Bắt đầu lúc</dt><dd id="detail-started-at">—</dd></div>
+            <div><dt>Hoạt động gần nhất</dt><dd id="detail-last-activity">—</dd></div>
+            <div><dt>Số tin nhắn</dt><dd id="detail-message-count">0</dd></div>
+            <div><dt>Bản nháp chờ duyệt</dt><dd id="detail-pending-drafts">0</dd></div>
+          </dl>
+        </section>
+        <section class="customer-detail-section contact-section">
+          <h3>Thông tin liên hệ</h3>
+          <p>Hồ sơ chat chưa lưu tên, email hoặc số điện thoại của khách.</p>
+        </section>
+        <div class="customer-privacy-note"><span aria-hidden="true">◇</span><p>Nội dung tin nhắn được lọc thông tin cá nhân trước khi lưu và chuyển tới Hermes.</p></div>
+      </aside>
+
+      <section id="consultations-view" class="consultations-view" aria-labelledby="consultations-title" hidden>
+        <header class="consultations-header">
+          <div><span class="details-eyebrow">ĐĂNG KÝ TƯ VẤN</span><h1 id="consultations-title">Yêu cầu đặt lịch</h1><p id="consultations-shop-label">Chọn cơ sở để xem thông tin người gửi.</p></div>
+          <div class="consultations-controls"><label class="visually-hidden" for="consultations-shop-select">Chọn cơ sở y tế</label><select id="consultations-shop-select" aria-label="Chọn cơ sở y tế"></select><button id="consultations-refresh" class="icon-button" type="button" aria-label="Làm mới yêu cầu tư vấn" title="Làm mới">↻</button></div>
+        </header>
+        <div id="consultations-message" class="status-message" role="status"></div>
+        <div id="consultations-empty" class="consultations-empty" hidden>Chưa có khách gửi biểu mẫu tư vấn.</div>
+        <div class="consultations-table-wrap">
+          <table class="consultations-table">
+            <thead><tr><th>Nguồn</th><th>Thời gian gửi</th><th>Họ và tên</th><th>Số điện thoại</th><th>Thời gian mong muốn</th><th>Ghi chú / triệu chứng</th></tr></thead>
+            <tbody id="consultations-table-body"></tbody>
+          </table>
+        </div>
+        <p class="consultations-privacy-note">Thông tin liên hệ và ghi chú được mã hóa khi lưu, chỉ hiển thị cho nhân viên đã đăng nhập và không được chuyển tới Hermes.</p>
+      </section>
+    </section>
+
+    <section id="shop-settings-view" class="shop-settings-view" hidden>
+      <header class="settings-topbar"><button id="settings-back" class="button-outline" type="button">← Quay lại hộp thư</button><div><h1>Cài đặt cơ sở y tế</h1><p>Trợ lý thông tin · Dịch vụ và đặt lịch</p></div><span class="top-spacer"></span><a class="soft-link" href="https://khamtieuhoa.bvtamtrisaigon.com.vn/" target="_blank" rel="noopener noreferrer">Website tham khảo ↗</a></header>
+      <div class="settings-content">
+        <div id="empty-state"><h2>Bắt đầu với cơ sở y tế</h2><p class="section-sub">Tạo hồ sơ cơ sở để cấu hình trang chat tư vấn, danh mục dịch vụ và mã nhúng.</p><button class="button-green" id="empty-new-shop" type="button">Tạo hồ sơ thử nghiệm</button></div>
+        <div id="shop-editor" hidden>
+          <section class="clinic-info-card" aria-label="Thông tin website tham khảo">
+            <div class="clinic-info-heading"><span class="clinic-mark" aria-hidden="true">+</span><div><span class="clinic-eyebrow">MẪU THAM KHẢO · BẢN THỬ NGHIỆM</span><h2>Khoa Tiêu hóa &amp; Nội soi</h2><p>Trợ lý chỉ cung cấp thông tin dịch vụ và hỗ trợ gửi yêu cầu đặt lịch.</p></div></div>
+            <div class="clinic-info-details"><div><span>Địa chỉ công khai</span><strong>171/3 Trường Chinh, P. Đông Hưng Thuận, TP. Hồ Chí Minh</strong></div><div><span>Hotline trên website</span><a href="tel:+84974508479">0974 508 479</a></div></div>
+            <p class="clinic-info-note">Đây là cấu hình thử nghiệm dựa trên nội dung website tham khảo; cần cơ sở xác nhận trước khi đưa vào sử dụng.</p>
+          </section>
+          <section class="admin-section">
+            <div class="section-head"><div><h2 id="shop-title">Thông tin cơ sở</h2><p class="section-sub">Cấu hình tên, lời chào và màu sắc trên trang trợ lý thông tin.</p></div><span id="shop-state" class="chat-status">Đang bật</span></div>
+            <form id="shop-form" class="form-grid">
+              <div class="field"><label for="shop-name">Tên cơ sở hiển thị</label><input id="shop-name" maxlength="160" required></div>
+              <div class="field"><label for="shop-slug">Mã đường dẫn trợ lý</label><input id="shop-slug" disabled></div>
+              <div class="field wide"><label for="welcome-message">Lời chào và phạm vi hỗ trợ</label><textarea id="welcome-message" maxlength="500"></textarea></div>
+              <div class="field"><label for="theme-color">Màu nhận diện</label><input id="theme-color" type="color"></div>
+              <div class="field wide"><label for="allowed-origins">Domain được phép nhúng khung chat</label><textarea id="allowed-origins" placeholder="https://khamtieuhoa.bvtamtrisaigon.com.vn"></textarea><p class="field-hint">Chỉ nhập origin HTTPS khi đã được cơ sở cho phép nhúng. Để trống thì website này không được cấp quyền nhúng; link chat riêng vẫn hoạt động.</p></div>
+              <div class="field wide form-actions"><button class="button-green" type="submit">Lưu cấu hình</button><button class="button-outline" id="toggle-shop" type="button">Tắt trợ lý</button><a id="open-chat" class="button-outline" target="_blank" rel="noopener">Mở trang tư vấn ↗</a></div>
+            </form>
+            <div id="shop-message" class="status-message" role="status"></div>
+          </section>
+          <aside class="clinic-safety-panel"><span class="clinic-safety-icon" aria-hidden="true">i</span><div><strong>Giới hạn an toàn y tế</strong><p>Trợ lý chỉ trả lời theo danh mục đã duyệt. Không chẩn đoán, diễn giải kết quả xét nghiệm hay đề xuất thuốc/điều trị. Không hỏi người bệnh nhập thông tin định danh hoặc triệu chứng chi tiết vào chat. Mọi câu trả lời vẫn cần nhân viên duyệt trước khi hiển thị.</p></div></aside>
+          <section class="admin-section"><div class="section-head"><div><h2>Link chia sẻ</h2><p class="section-sub">Gửi đường dẫn chat để khách xem thông tin và gửi câu hỏi.</p></div><button id="copy-chat" class="button-outline" type="button">Sao chép link</button></div><div class="code-box"><pre id="chat-link"></pre></div></section>
+          <section class="admin-section"><div class="section-head"><div><h2>Mã nhúng website</h2><p class="section-sub">Nhúng khung chat tư vấn vào website được cơ sở cho phép.</p></div><button id="copy-embed" class="button-outline" type="button">Sao chép mã</button></div><div class="code-box"><pre id="embed-code"></pre></div><p class="field-hint">Việc sao chép mã không tự cấp quyền cho domain. Hãy khai báo origin chính xác sau khi được cơ sở cho phép; HTTPS là bắt buộc để chạy website thật.</p></section>
+          <section class="admin-section"><div class="section-head"><div><h2>Dịch vụ &amp; gói khám</h2><p class="section-sub">Chỉ mục đang bật mới xuất hiện trong chat và được dùng để tạo bản nháp tư vấn. Giá là thông tin tham khảo.</p></div></div><div id="product-list" class="product-table"></div>
+            <form id="product-form" class="form-grid product-form"><div class="field"><label for="product-name">Tên dịch vụ / gói khám</label><input id="product-name" maxlength="200" required></div><div class="field"><label for="product-sku">Mã nội bộ</label><input id="product-sku" maxlength="80" required></div><div class="field"><label for="product-price">Giá tham khảo</label><input id="product-price" type="number" min="0" step="0.01" required></div><div class="field"><label for="product-currency">Tiền tệ</label><input id="product-currency" value="VND" maxlength="3" required></div><div class="field wide"><label for="product-description">Nội dung đã được cơ sở duyệt</label><textarea id="product-description" maxlength="4000" placeholder="Phạm vi dịch vụ, lưu ý và thông tin cần nhân viên xác nhận"></textarea><p class="field-hint">Không ghi chẩn đoán hay hứa hẹn kết quả y tế. Ghi rõ khi giá cần xác nhận.</p></div><div class="field wide"><button class="button-green" type="submit">Thêm dịch vụ</button></div></form>
+            <div id="product-message" class="status-message" role="status"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="/static/admin.js?v=clinic-chat-ui10-20261014" defer></script>
+</body>
+</html>
+

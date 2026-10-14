@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Thử mã nhúng · Hermes Hub</title><link rel="stylesheet" href="/static/portal.css"></head>
+<body>
+  <main class="portal-shell">
+    <header class="portal-top"><a class="brand-icon" href="/" aria-label="Về trang chủ">H</a><div><h1>Thử chatbot nhúng</h1><p>Xem giao diện khách và sao chép iframe cho website</p></div><span class="top-spacer"></span><a class="soft-link" href="/admin">Quản trị shop ↗</a></header>
+    <section class="preview-layout">
+      <div class="preview-stage"><iframe id="preview-frame" class="preview-frame" title="Xem trước chatbot nhúng" loading="lazy" referrerpolicy="strict-origin"></iframe></div>
+      <aside class="preview-controls"><h2>Giao diện khách</h2><p>Chọn mã shop để thử trên máy này. Khung chat tự thay đổi theo kích thước màn hình.</p><div class="field"><label for="shop-slug">Mã shop</label><input id="shop-slug" value="demo-shop" placeholder="ví dụ: shop-cua-ban"></div><button id="load-preview" class="button-green" type="button">Cập nhật xem trước</button><button id="mobile-toggle" class="button-outline" type="button">Xem trên điện thoại</button><div class="embed-instructions">Khi dùng trên website thật, hãy thêm origin website vào danh sách domain được phép trong trang Quản trị shop.</div><h2 style="margin-top:18px">Mã iframe</h2><p id="snippet" class="field-hint"></p><button id="copy-snippet" class="button-outline" type="button">Sao chép mã nhúng</button><div id="copy-status" class="status-message" role="status"></div></aside>
+    </section>
+  </main>
+  <script src="/static/embed-demo.js" defer></script>
+</body></html>
+

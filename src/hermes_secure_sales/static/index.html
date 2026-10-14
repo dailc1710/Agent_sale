@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Hermes Secure Sales Hub</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand-mark" aria-hidden="true">H</div>
+        <div>
+          <p class="eyebrow">HERMES SECURE SALES HUB</p>
+          <h1>Chatbot thử nghiệm</h1>
+        </div>
+        <span class="environment-badge"><span></span>MVP nội bộ</span>
+      </header>
+
+      <section class="privacy-notice" aria-label="Thông tin bảo mật">
+        <span class="notice-icon" aria-hidden="true">✓</span>
+        <p><strong>Không gửi tin ra khách.</strong> Nội dung được che PII trước khi gọi Hermes. Mọi câu trả lời đều là bản nháp và cần được duyệt.</p>
+      </section>
+
+      <section class="workspace" aria-label="Khu vực chatbot">
+        <aside class="setup-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">PHIÊN LÀM VIỆC</p>
+              <h2>Kết nối an toàn</h2>
+            </div>
+            <span id="connection-indicator" class="connection-indicator" aria-label="Chưa kết nối"></span>
+          </div>
+
+          <form id="connect-form" autocomplete="off">
+            <label for="access-token">JWT truy cập</label>
+            <input id="access-token" type="password" placeholder="Dán token phát triển hoặc token từ IdP" spellcheck="false" required>
+            <p class="field-hint">Token chỉ được giữ trong bộ nhớ của tab này, không được lưu vào trình duyệt.</p>
+
+            <label for="customer-id">ID khách hàng giả</label>
+            <div class="input-with-button">
+              <input id="customer-id" type="text" spellcheck="false" required>
+              <button id="new-customer" class="icon-button" type="button" title="Tạo ID giả mới" aria-label="Tạo ID khách hàng giả mới">↻</button>
+            </div>
+            <p class="field-hint">Dùng UUID tổng hợp có trong phạm vi customer_ids của token. Không nhập dữ liệu khách thật.</p>
+
+            <button class="button button-primary button-full" type="submit">Mở phiên chat</button>
+          </form>
+
+          <div class="role-guide">
+            <p class="eyebrow">PHÂN QUYỀN</p>
+            <p><strong>Sales</strong> tạo bản nháp. <strong>Reviewer</strong> hoặc quản trị viên duyệt. API luôn kiểm tra quyền và phạm vi khách.</p>
+          </div>
+
+          <div class="session-actions">
+            <button id="new-conversation" class="button button-secondary button-full" type="button" disabled>Cuộc trò chuyện mới</button>
+            <p id="session-label" class="session-label">Chưa có cuộc trò chuyện</p>
+          </div>
+        </aside>
+
+        <section class="chat-panel" aria-label="Nội dung hội thoại">
+          <div class="chat-heading">
+            <div class="avatar" aria-hidden="true">H</div>
+            <div>
+              <h2>Trợ lý bán hàng</h2>
+              <p><span class="status-dot"></span> Hermes API riêng · Privacy Gateway bật</p>
+            </div>
+          </div>
+
+          <div id="transcript" class="transcript" aria-live="polite" aria-label="Tin nhắn trong phiên">
+            <div class="empty-state" id="empty-state">
+              <div class="empty-illustration" aria-hidden="true">✳</div>
+              <h3>Bắt đầu với dữ liệu giả</h3>
+              <p>Kết nối token, nhập câu hỏi thử nghiệm. Thông tin liên hệ phổ biến sẽ được thay bằng placeholder trước khi rời khỏi hệ thống.</p>
+            </div>
+          </div>
+
+          <div id="error-banner" class="error-banner" role="alert" hidden></div>
+
+          <form id="message-form" class="composer" autocomplete="off">
+            <label class="visually-hidden" for="message-input">Câu hỏi thử nghiệm</label>
+            <textarea id="message-input" rows="2" maxlength="12000" placeholder="Nhập câu hỏi với dữ liệu tổng hợp…" disabled required></textarea>
+            <button class="send-button" type="submit" disabled aria-label="Tạo bản nháp">↑</button>
+            <div class="composer-caption"><span>Bản nháp cần được duyệt trước mọi bước tiếp theo</span><span id="char-count">0 / 12000</span></div>
+          </form>
+        </section>
+      </section>
+
+      <footer>Hermes Secure Sales Hub <span>•</span> Chỉ dùng dữ liệu thử nghiệm tổng hợp</footer>
+    </main>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
+
